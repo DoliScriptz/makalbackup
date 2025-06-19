@@ -15,10 +15,14 @@ export default function handler(req, res) {
   const [userid, username, expires, sig] = parts;
   if (Date.now() > parseInt(expires, 10)) return res.status(403).end("Token expired");
 
-  const expected = crypto.createHmac("sha256", process.env.HWID_SECRET).update(`${userid}:${username}:${expires}`).digest("hex");
+  const expected = crypto
+    .createHmac("sha256", process.env.HWID_SECRET)
+    .update(`${userid}:${username}:${expires}`)
+    .digest("hex");
+
   if (sig !== expected) return res.status(403).end("Invalid token");
 
-  const filePath = path.resolve("scripts", `${name}.lua`);
+  const filePath = path.resolve(process.cwd(), "scripts", `${name}.lua`);
   if (!fs.existsSync(filePath)) return res.status(404).end("Script not found");
 
   const script = fs.readFileSync(filePath, "utf8");

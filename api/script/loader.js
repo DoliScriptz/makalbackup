@@ -1,25 +1,31 @@
-module.exports = function handler(req, res) {
-  if (req.method !== "GET") return res.status(405).end();
-  if (req.headers["user-agent"] !== "MakalHubExecutor") return res.status(403).end();
+module.exports = (req, res) => {
+  if (req.method !== "GET") return res.status(405).end("Method Not Allowed");
+  if (req.headers["user-agent"] !== "MakalHubExecutor") return res.status(403).end("Forbidden");
 
   const lua = `
-local r=(syn and syn.request)or(http and http.request)or(request)or(http_request)
-assert(r,"Executor not supported")
+local r=(syn and syn.request)or(http and http.request)or(request)or(http_request)or(fluxus and fluxus.request)or(krnl and krnl.request)or(getgenv and getgenv().request)or(getgenv and getgenv().http_request)
+assert(type(r)=="function","Executor not supported")
 local h=game:GetService("HttpService")
-local p=game:GetService("Players").LocalPlayer
-local i=game.PlaceId
-local m={[537413528]="babft"}
-local n=m[i]
+local p=game.Players.LocalPlayer
+local id=game.PlaceId
+local g={[537413528]="babft"}
+local n=g[id]
 assert(n,"Game not supported")
-local u=("https://makalhub.vercel.app/api/init?userid=%d&username=%s"):format(p.UserId,h:UrlEncode(p.Name))
-local x=r({Url=u,Method="GET",Headers={["User-Agent"]="MakalHubExecutor"}})
-assert(x and x.Body,"Init failed")
-local t=h:JSONDecode(x.Body).token
-local s=r({Url=("https://makalhub.vercel.app/api/script/%s?token=%s"):format(n,h:UrlEncode(t)),Method="GET",Headers={["User-Agent"]="MakalHubExecutor"}})
-assert(s and s.Body,"Script fetch failed")
-loadstring(s.Body)()
+local i=r({
+  Url=("https://makalhub.vercel.app/api/init?userid=%d&username=%s"):format(p.UserId,h:UrlEncode(p.Name)),
+  Method="GET",
+  Headers={["User-Agent"]="MakalHubExecutor"}
+})
+assert(i and i.Body,"Init failed")
+local j=h:JSONDecode(i.Body)
+local k=r({
+  Url=("https://makalhub.vercel.app/api/script/%s?token=%s"):format(n,h:UrlEncode(j.token)),
+  Method="GET",
+  Headers={["User-Agent"]="MakalHubExecutor"}
+})
+assert(k and k.Body,"Script fetch failed")
+loadstring(k.Body)()
   `
-
   res.setHeader("Content-Type", "text/plain")
   res.status(200).send(lua.trim())
 }

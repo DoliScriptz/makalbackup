@@ -1,10 +1,10 @@
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
   if (req.method !== "GET") return res.status(405).end("Method Not Allowed");
   if (req.headers["user-agent"] !== "MakalHubExecutor") return res.status(403).end("Forbidden");
 
   const gameMap = {
     537413528: "babft",
-    // Add more: gameId: "scriptName"
+    // Add more game ID mappings here
   };
 
   const luaGameMap = "{" + Object.entries(gameMap)
@@ -41,4 +41,4 @@ loadstring(k.Body)()
 
   res.setHeader("Content-Type", "text/plain");
   return res.status(200).send(lua.trim());
-}
+};

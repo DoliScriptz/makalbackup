@@ -3,35 +3,42 @@ export default function handler(req, res) {
   if (req.headers["user-agent"] !== "MakalHubExecutor") return res.status(403).end("Forbidden");
 
   const gameMap = {
-    537413528: "babft"
-    // Add more game IDs here
+    537413528: "babft",
+    // Add more: gameId: "scriptName"
   };
 
+  const luaGameMap = "{" + Object.entries(gameMap)
+    .map(([id, name]) => `[${id}]="${name}"`)
+    .join(",") + "}";
+
   const lua = `
-local r=(syn and syn.request)or(http_request)or(http and http.request)or(request)
+local r=(syn and syn.request)or(http and http.request)or(request)or(http_request)
 assert(r, "Executor not supported")
+
 local h=game:GetService("HttpService")
-local p=game.Players.LocalPlayer
+local p=game:GetService("Players").LocalPlayer
 local id=game.PlaceId
-local g=${JSON.stringify(gameMap):gsub('"', '\\"')}
+local g=${luaGameMap}
 local n=g[id]
 assert(n, "Game not supported")
+
 local i=r({
   Url=("https://makalhub.vercel.app/api/init?userid=%d&username=%s"):format(p.UserId, h:UrlEncode(p.Name)),
   Method="GET",
   Headers={["User-Agent"]="MakalHubExecutor"}
 })
 assert(i and i.Body, "Init failed")
+
 local j=h:JSONDecode(i.Body)
 local k=r({
-  Url=("https://makalhub.vercel.app/api/script?name=%s&token=%s"):format(n, h:UrlEncode(j.token)),
+  Url=("https://makalhub.vercel.app/api/script/%s?token=%s"):format(n, h:UrlEncode(j.token)),
   Method="GET",
   Headers={["User-Agent"]="MakalHubExecutor"}
 })
 assert(k and k.Body, "Script fetch failed")
 loadstring(k.Body)()
-  `
+`;
 
   res.setHeader("Content-Type", "text/plain");
-  res.status(200).send(lua.trim());
+  return res.status(200).send(lua.trim());
 }

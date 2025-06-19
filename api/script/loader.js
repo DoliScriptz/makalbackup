@@ -9,7 +9,8 @@ local h = game:GetService("HttpService")
 local p = game.Players.LocalPlayer
 
 local g = {
-  [537413528] = "babft"
+  [537413528] = "babft",
+  [109983668079237] = "stealabrainrot"
 }
 local n = g[game.PlaceId]
 assert(n, "Game not supported")

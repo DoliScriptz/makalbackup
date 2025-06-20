@@ -12,7 +12,7 @@ export default function handler(req, res) {
     return res.status(400).end("Missing creds");
   }
 
-  const expires = Date.now() + 2 * 60 * 1000;
+  const expires = Date.now() + 1 * 15 * 1000;
   const payload = `${userid}:${username}:${expires}`;
   const sig = crypto
     .createHmac("sha256", process.env.HWID_SECRET)

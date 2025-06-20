@@ -5,26 +5,28 @@ export default function handler(req, res) {
   const lua = `
 local r = (syn and syn.request) or (http and http.request) or (http_request) or (request) or (fluxus and fluxus.request) or (krnl and krnl.request)
 assert(r, "Executor not supported")
+
 local h = game:GetService("HttpService")
 local p = game.Players.LocalPlayer
 
 local g = {
-  [537413528] = "babft",
-  [109983668079237] = "stealabrainrot"
+    [537413528] = "babft",
+    [109983668079237] = "stealabrainrot"
 }
 local n = g[game.PlaceId]
 assert(n, "Game not supported")
 
 local i = r({
-    Url = "https://makalhub.vercel.app/api/init?userid=" .. p.UserId .. "&username=" .. h:UrlEncode(p.Name),
+    Url = ("https://makalhub.vercel.app/api/init?userid=%d&username=%s"):format(p.UserId, h:UrlEncode(p.Name)),
     Method = "GET",
     Headers = { ["User-Agent"] = "MakalHubExecutor" }
 })
 assert(i and i.Body, "Init failed")
 
 local j = h:JSONDecode(i.Body)
+
 local k = r({
-    Url = "https://makalhub.vercel.app/api/script/" .. n .. "?token=" .. h:UrlEncode(j.token),
+    Url = ("https://makalhub.vercel.app/api/script/%s?token=%s"):format(n, h:UrlEncode(j.token)),
     Method = "GET",
     Headers = { ["User-Agent"] = "MakalHubExecutor" }
 })

@@ -10,7 +10,8 @@ local p = game.Players.LocalPlayer
 local placeId = game.PlaceId
 local g = {
   [537413528] = "babft",
-  [109983668079237] = "stealabrainrot"
+  [109983668079237] = "stealabrainrot",
+  [18687417158] = "forsaken"
 }
 local n = g[placeId]
 assert(n, "Game not supported")

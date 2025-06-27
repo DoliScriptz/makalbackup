@@ -1,8 +1,5 @@
 {
-  "rewrites": [
-    {
-      "source": "/scripts/:path*",
-      "destination": "/api/script/:path*"
-    }
+  "rewrites":[
+    { "source":"/scripts/:path*","destination":"/404" }
   ]
 }

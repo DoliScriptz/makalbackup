@@ -1,39 +1,36 @@
-import fs from "fs";
-import path from "path";
-import crypto from "crypto";
+const crypto = require('crypto');
+const fetch = require('node-fetch');
 
-const USED_TOKENS_FILE = "/tmp/used_tokens.txt";
+const RedisURL = 'https://clever-bobcat-52886.upstash.io';
+const RedisToken = 'Ac6WAAIjcDEzNDZjYzM4Y2NiMTk0Y2ExOTc4OWNjZTM4OTkwNTRmMXAxMA';
 
-export default function handler(req, res) {
-  if (req.method !== "GET") return res.status(405).end();
-  if (req.headers["user-agent"] !== "MakalHubExecutor") return res.status(403).end("Forbidden");
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).end();
 
-  const { name, token } = req.query;
-  if (!name || !token) return res.status(400).end("Missing name or token");
+  const { name, token } = req.body || {};
+  if (!name || !token) return res.status(400).end();
 
-  const [userid, username, expires, sig] = token.split(":");
-  if (!userid || !username || !expires || !sig) return res.status(400).end("Malformed token");
-  if (Date.now() > parseInt(expires, 10)) return res.status(403).end("Token expired");
+  const [uid, usr, exp, sig] = token.split(':');
+  if (!uid || !usr || !exp || !sig || Date.now() > +exp) return res.status(403).end();
 
-  try {
-    const used = fs.readFileSync(USED_TOKENS_FILE, "utf8").split("\n");
-    if (used.includes(token)) return res.status(403).end("Token already used");
-    fs.appendFileSync(USED_TOKENS_FILE, token + "\n");
-  } catch {
-    fs.writeFileSync(USED_TOKENS_FILE, token + "\n");
-  }
+  const valid = crypto
+    .createHmac('sha256', process.env.HWID_SECRET)
+    .update(`${uid}:${usr}:${exp}`)
+    .digest('hex') === sig;
+  if (!valid) return res.status(403).end();
 
-  const expectedSig = crypto
-    .createHmac("sha256", process.env.HWID_SECRET)
-    .update(`${userid}:${username}:${expires}`)
-    .digest("hex");
+  const scriptRes = await fetch(`https://makalhub.vercel.app/scripts/${name}.lua`);
+  if (!scriptRes.ok) return res.status(404).end();
+  const script = await scriptRes.text();
 
-  if (sig !== expectedSig) return res.status(403).end("Invalid token");
+  await fetch(`${RedisURL}/incr/executions:${name}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${RedisToken}`,
+      'Content-Type': 'application/json'
+    }
+  });
 
-  const filePath = path.resolve("scripts", `${name}.lua`);
-  if (!fs.existsSync(filePath)) return res.status(404).end("Script not found");
-
-  const script = fs.readFileSync(filePath, "utf8");
-  res.setHeader("Content-Type", "text/plain");
-  return res.status(200).send(script);
-}
+  res.setHeader('Content-Type', 'text/plain');
+  res.send(script);
+};

@@ -1,8 +1,8 @@
-const crypto = require('crypto');
 const fetch = require('node-fetch');
+const crypto = require('crypto');
 
-const RedisURL = 'https://clever-bobcat-52886.upstash.io';
-const RedisToken = 'Ac6WAAIjcDEzNDZjYzM4Y2NiMTk0Y2ExOTc4OWNjZTM4OTkwNTRmMXAxMA';
+const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
+const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).end();
@@ -23,13 +23,18 @@ module.exports = async (req, res) => {
   if (!scriptRes.ok) return res.status(404).end();
   const script = await scriptRes.text();
 
-  await fetch(`${RedisURL}/incr/executions:${name}`, {
+  const redisResponse = await fetch(`${UPSTASH_URL}`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${RedisToken}`,
+      Authorization: `Bearer ${UPSTASH_TOKEN}`,
       'Content-Type': 'application/json'
-    }
+    },
+    body: JSON.stringify({
+      command: ['INCR', `executions:${name}`]
+    })
   });
+
+  if (!redisResponse.ok) return res.status(502).end();
 
   res.setHeader('Content-Type', 'text/plain');
   res.send(script);

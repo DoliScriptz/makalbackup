@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
     .digest('hex') === sig;
   if (!valid) return res.status(403).end();
 
-  const scriptRes = await fetch(`https://makalhub.vercel.app/scripts/${name}.lua`);
+  const scriptRes = await fetch(`https://makalback.vercel.app/scripts/${name}.lua`);
   if (!scriptRes.ok) return res.status(404).end();
   const script = await scriptRes.text();
 
